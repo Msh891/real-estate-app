@@ -26,63 +26,58 @@ export default function HomePage() {
     const email = prompt("Enter your registered broker email:");
     if (email) {
       localStorage.setItem('brokerEmail', email);
-      // This sends them to the add-listing page after they "log in"
       window.location.href = '/add-listing';
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'sans-serif' }}>
-      {/* Navigation Bar */}
-      <nav style={{ padding: '20px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'white', borderBottom: '1px solid #eee' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0070f3', margin: 0 }}>Mivida Portal</h1>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f4f7f6', fontFamily: 'sans-serif' }}>
+      {/* Navigation */}
+      <nav style={{ padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1a1a1a', color: 'white' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '1px' }}>MIVIDA B2B NETWORK</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
           <button onClick={handleBrokerLogin} style={navBtn}>Broker Login</button>
-          <Link href="/signup"><button style={navBtn}>Join as Broker</button></Link>
-          <Link href="/admin-gate"><button style={{ ...navBtn, background: '#000', color: '#fff' }}>Admin</button></Link>
+          <Link href="/signup"><button style={navBtn}>Join Network</button></Link>
+          <Link href="/admin-gate"><button style={{ ...navBtn, background: '#0070f3', border: 'none' }}>Admin</button></Link>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div style={{ textAlign: 'center', padding: '50px 20px' }}>
-        <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '10px' }}>Property Feed</h2>
-        <p style={{ color: '#666' }}>Browse real-time listings from approved brokers.</p>
+      {/* Hero */}
+      <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+        <h2 style={{ fontSize: '28px', color: '#333' }}>Available Inventory</h2>
+        <p style={{ color: '#666' }}>Internal database for approved brokers only.</p>
       </div>
 
-      {/* Listing Grid */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+      {/* Grid */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px 60px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
         {loading ? (
-          <p style={{ textAlign: 'center', gridColumn: '1/-1' }}>Loading units...</p>
-        ) : listings.length > 0 ? (
-          listings.map((item: any) => (
-            <div key={item.id} style={{ background: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #eee' }}>
-              <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>{item.title}</h3>
-              <p style={{ color: '#0070f3', fontWeight: 'bold', fontSize: '20px', margin: '0 0 5px 0' }}>{Number(item.price).toLocaleString()} EGP</p>
-              <p style={{ fontSize: '13px', color: '#888', marginBottom: '15px' }}>📍 {item.location}</p>
-              <p style={{ fontSize: '14px', color: '#444', height: '40px', overflow: 'hidden', marginBottom: '15px' }}>{item.description}</p>
-              <button 
-                onClick={() => alert(`Contact Broker at: ${item.broker_email}`)} 
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #0070f3', background: 'transparent', color: '#0070f3', fontWeight: '600', cursor: 'pointer' }}
-              >
-                Contact
-              </button>
+          <p style={{ textAlign: 'center', gridColumn: '1/-1' }}>Fetching internal records...</p>
+        ) : listings.map((item: any) => (
+          <div key={item.id} style={{ background: 'white', borderRadius: '8px', border: '1px solid #e0e0e0', overflow: 'hidden' }}>
+            <div style={{ padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1a1a1a' }}>{item.title}</h3>
+                <span style={{ fontSize: '10px', background: '#eee', padding: '2px 6px', borderRadius: '4px' }}>UNIT</span>
+              </div>
+              <p style={{ color: '#0070f3', fontWeight: 'bold', fontSize: '18px', margin: '5px 0' }}>{Number(item.price).toLocaleString()} EGP</p>
+              <p style={{ fontSize: '13px', color: '#666', marginBottom: '10px' }}>📍 {item.location}</p>
+              <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.4', marginBottom: '20px', height: '40px', overflow: 'hidden' }}>{item.description}</p>
+              
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                <p style={{ fontSize: '11px', color: '#999', marginBottom: '8px' }}>LISTING BROKER: {item.broker_email}</p>
+                <button 
+                  onClick={() => window.open(`mailto:${item.broker_email}?subject=Inquiry: ${item.title}`)} 
+                  style={{ width: '100%', padding: '10px', background: '#1a1a1a', color: 'white', border: 'none', borderRadius: '4px', fontWeight: '600', cursor: 'pointer' }}
+                >
+                  Contact Listing Broker
+                </button>
+              </div>
             </div>
-          ))
-        ) : (
-          <p style={{ textAlign: 'center', gridColumn: '1/-1', color: '#999' }}>No listings found.</p>
-        )}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-const navBtn = { 
-  padding: '8px 16px', 
-  background: '#fff', 
-  color: '#000', 
-  border: '1px solid #ddd', 
-  borderRadius: '6px', 
-  cursor: 'pointer', 
-  fontSize: '14px', 
-  fontWeight: '500' 
-};
+const navBtn = { padding: '8px 15px', background: 'transparent', color: 'white', border: '1px solid #444', borderRadius: '4px', cursor: 'pointer', fontSize: '13px' };
