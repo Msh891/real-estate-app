@@ -6,10 +6,9 @@ export default function AdminGate() {
   const [password, setPassword] = useState(''); 
   const router = useRouter();
 
-  const handleUnlock = (e: React.FormEvent) => {
-    // TRUTH: This line below is the most important. It stops the page from resetting.
+  const handleUnlock = (e: any) => {
     e.preventDefault(); 
-
+    // Password is case-sensitive
     if (password === "Egypt2025") { 
       localStorage.setItem('adminKey', 'true');
       router.push('/ops');
@@ -25,8 +24,8 @@ export default function AdminGate() {
         <input 
           type="password" 
           placeholder="Enter Password"
-          style={{ padding: '12px', width: '250px', borderRadius: '8px', border: '1px solid #ddd', display: 'block', marginBottom: '15px' }}
-          onChange={(e) => setPassword(e.target.value)} 
+          style={{ padding: '12px', width: '250px', borderRadius: '8px', border: '1px solid #ddd', display: 'block', marginBottom: '15px', color: 'black' }}
+          onChange={(e: any) => setPassword(e.target.value)} 
         />
         <button 
           type="submit"
