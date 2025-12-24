@@ -1,137 +1,80 @@
 'use client'
-
-import React, { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  "https://vouwxpzkyqtsqslxkhwf.supabase.co", 
-  "sb_publishable_iYnq09GE5Wa1Tjq7YQIH3w_ploK2Rok"
-);
+import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function AddListing() {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    compound_name: '',
-    rent_price: '',
-    bedrooms: '',
-    furnishing: 'Unfurnished',
-    availability_date: ''
-  });
+  const [form, setForm] = useState({ title: '', price: '', location: '', description: '' });
+  const [isApproved, setIsApproved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    checkBrokerStatus();
+  }, []);
+
+  async function checkBrokerStatus() {
+    // TRUTH: We check the email you stored in localStorage during signup
+    const userEmail = localStorage.getItem('brokerEmail');
+    
+    if (!userEmail) {
+      alert("Please apply for access first.");
+      router.push('/signup');
+      return;
+    }
+
+    // FIX: Changed .where() to .eq() which is the correct Supabase syntax
+    const { data, error } = await supabase
+      .from('brokers')
+      .select('status')
+      .eq('email', userEmail)
+      .eq('status', 'approved')
+      .single();
+
+    if (data) {
+      setIsApproved(true);
+      setLoading(false);
+    } else {
+      alert("Access Denied: You are not an approved broker yet.");
+      router.push('/');
+    }
+  }
+
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setLoading(true);
-
-    // Sending data to the 'listings' table
     const { error } = await supabase.from('listings').insert([
       { 
-        compound_name: formData.compound_name,
-        rent_price: parseFloat(formData.rent_price),
-        bedrooms: parseInt(formData.bedrooms),
-        furnishing: formData.furnishing,
-        availability_date: formData.availability_date,
-        is_active: true
+        title: form.title, 
+        price: form.price, 
+        location: form.location, 
+        description: form.description,
+        broker_email: localStorage.getItem('brokerEmail') 
       }
     ]);
 
     if (error) {
-      alert("Error: " + error.message);
+      alert(error.message);
     } else {
-      alert("🟢 Listing Published Successfully!");
-      // Reset form
-      setFormData({
-        compound_name: '',
-        rent_price: '',
-        bedrooms: '',
-        furnishing: 'Unfurnished',
-        availability_date: ''
-      });
+      alert("Unit posted successfully!");
+      router.push('/');
     }
-    setLoading(false);
   };
 
+  if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Verifying Approval Status...</div>;
+
   return (
-    <div style={{ padding: '40px', maxWidth: '500px', margin: '0 auto', fontFamily: 'sans-serif' }}>
-      <h1 style={{ borderBottom: '2px solid #eee', paddingBottom: '10px' }}>Add New Listing</h1>
-      <p style={{ color: '#666', fontSize: '14px' }}>Workflow A2: Immediate Publish</p>
-      
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-        
-        <div>
-          <label style={labelStyle}>Compound Name</label>
-          <input 
-            required 
-            value={formData.compound_name}
-            onChange={e => setFormData({...formData, compound_name: e.target.value})} 
-            style={inputStyle} 
-            placeholder="e.g. SODIC, Mivida..."
-          />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Monthly Rent</label>
-          <input 
-            type="number" 
-            required 
-            value={formData.rent_price}
-            onChange={e => setFormData({...formData, rent_price: e.target.value})} 
-            style={inputStyle} 
-            placeholder="Amount in EGP/USD"
-          />
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Bedrooms</label>
-            <input 
-              type="number" 
-              required 
-              value={formData.bedrooms}
-              onChange={e => setFormData({...formData, bedrooms: e.target.value})} 
-              style={inputStyle} 
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <label style={labelStyle}>Furnishing</label>
-            <select 
-              value={formData.furnishing}
-              onChange={e => setFormData({...formData, furnishing: e.target.value})} 
-              style={inputStyle}
-            >
-              <option value="Unfurnished">Unfurnished</option>
-              <option value="Furnished">Furnished</option>
-              <option value="Partially">Partially</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label style={labelStyle}>Availability Date</label>
-          <input 
-            type="date" 
-            required 
-            value={formData.availability_date}
-            onChange={e => setFormData({...formData, availability_date: e.target.value})} 
-            style={inputStyle} 
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          disabled={loading} 
-          style={{ 
-            ...btnStyle, 
-            backgroundColor: loading ? '#ccc' : '#000',
-            cursor: loading ? 'not-allowed' : 'pointer'
-          }}
-        >
-          {loading ? "PUBLISHING..." : "PUBLISH LISTING"}
-        </button>
+    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1 style={{ borderBottom: '2px solid #0070f3', paddingBottom: '10px' }}>🏠 Post New Unit</h1>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
+        <input placeholder="Unit Title" style={inputStyle} onChange={(e: any) => setForm({...form, title: e.target.value})} required />
+        <input placeholder="Price (EGP)" type="number" style={inputStyle} onChange={(e: any) => setForm({...form, price: e.target.value})} required />
+        <input placeholder="Location" style={inputStyle} onChange={(e: any) => setForm({...form, location: e.target.value})} required />
+        <textarea placeholder="Description" style={{...inputStyle, height: '100px'}} onChange={(e: any) => setForm({...form, description: e.target.value})} required />
+        <button type="submit" style={btnStyle}>Publish Listing</button>
       </form>
     </div>
   );
 }
 
-const labelStyle = { display: 'block', marginBottom: '5px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' as const };
-const inputStyle = { width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd', boxSizing: 'border-box' as const };
-const btnStyle = { padding: '15px', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', fontSize: '16px' };
+const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '16px', color: 'black' };
+const btnStyle = { padding: '15px', background: '#0070f3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
