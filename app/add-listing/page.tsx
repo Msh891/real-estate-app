@@ -5,76 +5,60 @@ import { useRouter } from 'next/navigation';
 
 export default function AddListing() {
   const [form, setForm] = useState({ title: '', price: '', location: '', description: '' });
-  const [isApproved, setIsApproved] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    checkBrokerStatus();
-  }, []);
+    const checkStatus = async () => {
+      const email = localStorage.getItem('brokerEmail');
+      if (!email) {
+        router.push('/signup');
+        return;
+      }
 
-  async function checkBrokerStatus() {
-    // TRUTH: We check the email you stored in localStorage during signup
-    const userEmail = localStorage.getItem('brokerEmail');
-    
-    if (!userEmail) {
-      alert("Please apply for access first.");
-      router.push('/signup');
-      return;
-    }
+      const { data, error } = await supabase
+        .from('brokers')
+        .select('status')
+        .eq('email', email)
+        .single();
 
-    // FIX: Changed .where() to .eq() which is the correct Supabase syntax
-    const { data, error } = await supabase
-      .from('brokers')
-      .select('status')
-      .eq('email', userEmail)
-      .eq('status', 'approved')
-      .single();
-
-    if (data) {
-      setIsApproved(true);
-      setLoading(false);
-    } else {
-      alert("Access Denied: You are not an approved broker yet.");
-      router.push('/');
-    }
-  }
+      if (data?.status === 'approved') {
+        setLoading(false);
+      } else {
+        alert("Account not approved yet. Please wait for admin approval.");
+        router.push('/');
+      }
+    };
+    checkStatus();
+  }, [router]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const { error } = await supabase.from('listings').insert([
-      { 
-        title: form.title, 
-        price: form.price, 
-        location: form.location, 
-        description: form.description,
-        broker_email: localStorage.getItem('brokerEmail') 
-      }
-    ]);
+    const { error } = await supabase.from('listings').insert([{ 
+      ...form, 
+      broker_email: localStorage.getItem('brokerEmail') 
+    }]);
 
-    if (error) {
-      alert(error.message);
-    } else {
-      alert("Unit posted successfully!");
+    if (error) alert(error.message);
+    else {
+      alert("Success!");
       router.push('/');
     }
   };
 
-  if (loading) return <div style={{ padding: '50px', textAlign: 'center' }}>Verifying Approval Status...</div>;
+  if (loading) return <p style={{textAlign: 'center', marginTop: '50px'}}>Verifying Broker Status...</p>;
 
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ borderBottom: '2px solid #0070f3', paddingBottom: '10px' }}>🏠 Post New Unit</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '20px' }}>
-        <input placeholder="Unit Title" style={inputStyle} onChange={(e: any) => setForm({...form, title: e.target.value})} required />
-        <input placeholder="Price (EGP)" type="number" style={inputStyle} onChange={(e: any) => setForm({...form, price: e.target.value})} required />
-        <input placeholder="Location" style={inputStyle} onChange={(e: any) => setForm({...form, location: e.target.value})} required />
-        <textarea placeholder="Description" style={{...inputStyle, height: '100px'}} onChange={(e: any) => setForm({...form, description: e.target.value})} required />
-        <button type="submit" style={btnStyle}>Publish Listing</button>
+    <div style={{ maxWidth: '500px', margin: '50px auto', padding: '20px', fontFamily: 'sans-serif' }}>
+      <h1>Post a Unit</h1>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <input placeholder="Title" required style={inp} onChange={e => setForm({...form, title: e.target.value})} />
+        <input placeholder="Price" type="number" required style={inp} onChange={e => setForm({...form, price: e.target.value})} />
+        <input placeholder="Location" required style={inp} onChange={e => setForm({...form, location: e.target.value})} />
+        <textarea placeholder="Description" required style={inp} onChange={e => setForm({...form, description: e.target.value})} />
+        <button type="submit" style={{ padding: '15px', background: '#0070f3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Publish</button>
       </form>
     </div>
   );
 }
-
-const inputStyle = { padding: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '16px', color: 'black' };
-const btnStyle = { padding: '15px', background: '#0070f3', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' };
+const inp = { padding: '12px', borderRadius: '8px', border: '1px solid #ccc' };
