@@ -11,6 +11,10 @@ export default function SignupPage() {
   const handleSignup = async (e: any) => {
     e.preventDefault();
     setLoading(true);
+
+    // TRUTH: We save the email to the browser so we can check their status later
+    localStorage.setItem('brokerEmail', form.email);
+
     const { error } = await supabase.from('brokers').insert([
       { 
         email: form.email, 
@@ -25,7 +29,7 @@ export default function SignupPage() {
     if (error) {
       alert("Error: " + error.message);
     } else {
-      alert("Application sent! Admin will review it.");
+      alert("Application sent! Once the admin approves this email, you can post units.");
       router.push('/');
     }
   };
